@@ -1,172 +1,240 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="css/leaflet.css"><link rel="stylesheet" href="css/L.Control.Locate.min.css">
-        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
-        <link rel="stylesheet" href="css/leaflet-measure.css">
-        <style>
-        html, body, #map {
-            width: 100%;
-            height: 100%;
-            padding: 0;
-            margin: 0;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>leaflet-lasso</title>
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet-lasso@2.2.12/dist/leaflet-lasso.umd.js"></script>
+    <!-- <script src="../dist/leaflet-lasso.umd.js"></script> -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        #map {
+            width: 640px;
+            height: 320px;
+            float: left;
         }
-        </style>
-        <title></title>
-    </head>
-    <body>
-        <div id="map">
+        #sidebar {
+            margin-left: 650px;
+        }
+        .selected {
+            filter: hue-rotate(135deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>leaflet-lasso</h1>
+        <p>Lasso selection plugin for Leaflet</p>
+        <hr>
+
+        <div id="map"></div>
+        <div id="sidebar">
+            <div>
+                <button id="toggleLasso" type="button" class="btn btn-primary btn-sm">Toggle Lasso</button>
+                <br><br>
+                <label><input type="radio" name="containOrIntersect" id="contain" checked> Contain</label>
+                <label class="ml-2"><input type="radio" name="containOrIntersect" id="intersect"> Intersect</label>
+            </div>
+            <br>
+            <div id="lassoEnabled">Disabled</div>
+            <br>
+            <div id="lassoResult"></div>
         </div>
-        <script src="js/qgis2web_expressions.js"></script>
-        <script src="js/leaflet.js"></script><script src="js/L.Control.Locate.min.js"></script>
-        <script src="js/leaflet.rotatedMarker.js"></script>
-        <script src="js/leaflet.pattern.js"></script>
-        <script src="js/leaflet-hash.js"></script>
-        <script src="js/Autolinker.min.js"></script>
-        <script src="js/rbush.min.js"></script>
-        <script src="js/labelgun.min.js"></script>
-        <script src="js/labels.js"></script>
-        <script src="js/leaflet-measure.js"></script>
-        <script src="data/SubmarineCables_1.js"></script>
-        <script>
-        var highlightLayer;
-        function highlightFeature(e) {
-            highlightLayer = e.target;
+    </div>
 
-            if (e.target.feature.geometry.type === 'LineString') {
-              highlightLayer.setStyle({
-                color: '#ffff00',
-              });
-            } else {
-              highlightLayer.setStyle({
-                fillColor: '#ffff00',
-                fillOpacity: 1
-              });
-            }
-            highlightLayer.openPopup();
-        }
-        var map = L.map('map', {
-            zoomControl:true, maxZoom:28, minZoom:1
-        }).fitBounds([[-44.19434200968813,-202.64690439163036],[111.81876935493776,18.06857708495093]]);
-        var hash = new L.Hash(map);
-        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
-        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
-        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
-        var measureControl = new L.Control.Measure({
-            position: 'topleft',
-            primaryLengthUnit: 'meters',
-            secondaryLengthUnit: 'kilometers',
-            primaryAreaUnit: 'sqmeters',
-            secondaryAreaUnit: 'hectares'
-        });
-        measureControl.addTo(map);
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0]
-        .innerHTML = '';
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0]
-        .className += ' fas fa-ruler';
-        var bounds_group = new L.featureGroup([]);
-        function setBounds() {
-        }
-        map.createPane('pane_DarkMatter_0');
-        map.getPane('pane_DarkMatter_0').style.zIndex = 400;
-        var layer_DarkMatter_0 = L.tileLayer('http://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
-            pane: 'pane_DarkMatter_0',
-            opacity: 1.0,
-            attribution: '<a href="https://cartodb.com/basemaps/">Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.</a>',
-            minZoom: 1,
-            maxZoom: 28,
-            minNativeZoom: 0,
-            maxNativeZoom: 20
-        });
-        layer_DarkMatter_0;
-        map.addLayer(layer_DarkMatter_0);
-        function pop_SubmarineCables_1(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
-                    }
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
+    <script type="module">
+        const mapElement = document.querySelector('#map');
+        const toggleLasso = document.querySelector('#toggleLasso');
+        const contain = document.querySelector('#contain');
+        const intersect = document.querySelector('#intersect');
+        const lassoEnabled = document.querySelector('#lassoEnabled');
+        const lassoResult = document.querySelector('#lassoResult');
+
+        const map = L.map(mapElement, { center: [0, 0], zoom: 0 });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        const lassoControl = L.control.lasso().addTo(map);
+
+        // the same layers as in unit test
+        const startLatLng = [51.5, -0.11];
+        const latDelta = 0.01;
+        const lngDelta = latDelta * 1.75;
+        const latSmallDelta = 0.002;
+        const lngSmallDelta = latSmallDelta * 1.75;
+        const markers = new Array(9).fill(undefined).map((_, i) => L.marker([startLatLng[0] + Math.floor(i / 3) * latDelta, startLatLng[1] + (i % 3) * lngDelta]));
+        const circleMarker = L.circleMarker([startLatLng[0] + latDelta * 2, startLatLng[1] + lngDelta * 3], { radius: 21 });
+        const circle = L.circle([startLatLng[0] + latDelta * 2, startLatLng[1] + lngDelta * 4], { radius: 250 });
+        const polyline = (latLng => L.polyline([
+            [latLng[0] - latSmallDelta, latLng[1] - lngSmallDelta],
+            [latLng[0] + latSmallDelta, latLng[1] - lngSmallDelta],
+            [latLng[0] + latSmallDelta, latLng[1] + lngSmallDelta],
+            [latLng[0] - latSmallDelta, latLng[1] + lngSmallDelta],
+        ]))([startLatLng[0] + latDelta * 1, startLatLng[1] + lngDelta * 3]);
+        const multiPolyline = (latLng => L.polyline([
+            [
+                [latLng[0] - latSmallDelta, latLng[1] - lngSmallDelta],
+                [latLng[0] + latSmallDelta, latLng[1] - lngSmallDelta],
+                [latLng[0] + latSmallDelta, latLng[1] + lngSmallDelta],
+                [latLng[0] - latSmallDelta, latLng[1] + lngSmallDelta],
+            ],
+            [
+                [latLng[0] - latSmallDelta / 2, latLng[1] - lngSmallDelta / 2],
+                [latLng[0] + latSmallDelta / 2, latLng[1] - lngSmallDelta / 2],
+                [latLng[0] + latSmallDelta / 2, latLng[1] + lngSmallDelta / 2],
+                [latLng[0] - latSmallDelta / 2, latLng[1] + lngSmallDelta / 2],
+            ],
+        ]))([startLatLng[0] + latDelta * 1, startLatLng[1] + lngDelta * 4]);
+        const rectangle = (latLng => L.rectangle([
+            [latLng[0] - latSmallDelta, latLng[1] - lngSmallDelta],
+            [latLng[0] + latSmallDelta, latLng[1] + lngSmallDelta],
+        ]))([startLatLng[0], startLatLng[1] + lngDelta * 3]);
+        const polygon = (latLng => L.polygon([
+            [
+                [latLng[0] - latSmallDelta, latLng[1] - lngSmallDelta],
+                [latLng[0] + latSmallDelta, latLng[1] - lngSmallDelta],
+                [latLng[0] + latSmallDelta, latLng[1] + lngSmallDelta],
+                [latLng[0] - latSmallDelta, latLng[1] + lngSmallDelta],
+            ],
+        ]))([startLatLng[0], startLatLng[1] + lngDelta * 4]);
+        const holedPolygon = (latLng => L.polygon([
+            [
+                [latLng[0] - latSmallDelta, latLng[1] - lngSmallDelta],
+                [latLng[0] - latSmallDelta, latLng[1] + lngSmallDelta],
+                [latLng[0] + latSmallDelta, latLng[1] + lngSmallDelta],
+                [latLng[0] + latSmallDelta, latLng[1] - lngSmallDelta],
+            ],
+            [
+                [latLng[0] - latSmallDelta / 2, latLng[1] - lngSmallDelta / 2],
+                [latLng[0] - latSmallDelta / 2, latLng[1] + lngSmallDelta / 2],
+                [latLng[0] + latSmallDelta / 2, latLng[1] + lngSmallDelta / 2],
+                [latLng[0] + latSmallDelta / 2, latLng[1] - lngSmallDelta / 2],
+            ],
+        ]))([startLatLng[0], startLatLng[1] + lngDelta * 5]);
+        const multiPolygon = (latLng => L.polygon([
+            [
+                [
+                    [latLng[0] - latSmallDelta, latLng[1] - lngSmallDelta],
+                    [latLng[0] - latSmallDelta, latLng[1]],
+                    [latLng[0], latLng[1]],
+                    [latLng[0], latLng[1] - lngSmallDelta],
+                ],
+            ],
+            [
+                [
+                    [latLng[0], latLng[1]],
+                    [latLng[0], latLng[1] + lngSmallDelta],
+                    [latLng[0] + latSmallDelta, latLng[1] + lngSmallDelta],
+                    [latLng[0] + latSmallDelta, latLng[1]],
+                ],
+            ],
+        ]))([startLatLng[0], startLatLng[1] + lngDelta * 6]);
+        const holedMultiPolygon = (latLng => L.polygon([
+            [
+                [
+                    [latLng[0] - latSmallDelta, latLng[1] - lngSmallDelta],
+                    [latLng[0] - latSmallDelta, latLng[1]],
+                    [latLng[0], latLng[1]],
+                    [latLng[0], latLng[1] - lngSmallDelta],
+                ],
+                [
+                    [latLng[0] - latSmallDelta / 4 * 3, latLng[1] - lngSmallDelta / 4 * 3],
+                    [latLng[0] - latSmallDelta / 4 * 3, latLng[1] - lngSmallDelta / 4],
+                    [latLng[0] - latSmallDelta / 4, latLng[1] - lngSmallDelta / 4],
+                    [latLng[0] - latSmallDelta / 4, latLng[1] - lngSmallDelta / 4 * 3],
+                ],
+            ],
+            [
+                [
+                    [latLng[0], latLng[1]],
+                    [latLng[0], latLng[1] + lngSmallDelta],
+                    [latLng[0] + latSmallDelta, latLng[1] + lngSmallDelta],
+                    [latLng[0] + latSmallDelta, latLng[1]],
+                ],
+                [
+                    [latLng[0] + latSmallDelta / 4 * 3, latLng[1] + lngSmallDelta / 4 * 3],
+                    [latLng[0] + latSmallDelta / 4 * 3, latLng[1] + lngSmallDelta / 4],
+                    [latLng[0] + latSmallDelta / 4, latLng[1] + lngSmallDelta / 4],
+                    [latLng[0] + latSmallDelta / 4, latLng[1] + lngSmallDelta / 4 * 3],
+                ],
+            ],
+        ]))([startLatLng[0], startLatLng[1] + lngDelta * 7]);
+        const markerClusterGroup = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 40 });
+        markerClusterGroup.addLayers(markers);
+        const layers = [
+            markerClusterGroup,
+            circleMarker,
+            circle,
+            polyline,
+            multiPolyline,
+            rectangle,
+            polygon,
+            holedPolygon,
+            multiPolygon,
+            holedMultiPolygon,
+        ];
+
+        const featureGroup = L.featureGroup(layers).addTo(map);
+        map.fitBounds(featureGroup.getBounds(), { animate: false });
+
+        function resetSelectedState() {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && !(layer instanceof L.MarkerCluster)) {
+                    layer.setIcon(new L.Icon.Default());
+                } else if (layer instanceof L.Path) {
+                    layer.setStyle({ color: '#3388ff' });
+                }
             });
-            var popupContent = '<table>\
-                    <tr>\
-                        <td colspan="2"><strong>OBJECTID</strong><br />' + (feature.properties['OBJECTID'] !== null ? autolinker.link(feature.properties['OBJECTID'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2"><strong>Name</strong><br />' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2"><strong>cable_id</strong><br />' + (feature.properties['cable_id'] !== null ? autolinker.link(feature.properties['cable_id'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2"><strong>length</strong><br />' + (feature.properties['length'] !== null ? autolinker.link(feature.properties['length'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2"><strong>owners</strong><br />' + (feature.properties['owners'] !== null ? autolinker.link(feature.properties['owners'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <td colspan="2"><strong>url</strong><br />' + (feature.properties['url'] !== null ? autolinker.link(feature.properties['url'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                </table>';
-            layer.bindPopup(popupContent, {maxHeight: 400});
+
+            lassoResult.innerHTML = '';
+        }
+        function setSelectedLayers(layers) {
+            resetSelectedState();
+
+            layers.forEach(layer => {
+                if (layer instanceof L.Marker && !(layer instanceof L.MarkerCluster)) {
+                    layer.setIcon(new L.Icon.Default({ className: 'selected '}));
+                } else if (layer instanceof L.Path) {
+                    layer.setStyle({ color: '#ff4620' });
+                }
+            });
+
+            lassoResult.innerHTML = layers.length ? `Selected ${layers.length} layers` : '';
         }
 
-        function style_SubmarineCables_1_0() {
-            return {
-                pane: 'pane_SubmarineCables_1',
-                opacity: 1,
-                color: 'rgba(28,195,248,1.0)',
-                dashArray: '',
-                lineCap: 'square',
-                lineJoin: 'bevel',
-                weight: 2.0,
-                fillOpacity: 0,
-                interactive: true,
+        map.on('mousedown', () => {
+            resetSelectedState();
+        });
+        map.on('lasso.finished', event => {
+            setSelectedLayers(event.layers);
+        });
+        map.on('lasso.enabled', () => {
+            lassoEnabled.innerHTML = 'Enabled';
+            resetSelectedState();
+        });
+        map.on('lasso.disabled', () => {
+            lassoEnabled.innerHTML = 'Disabled';
+        });
+
+        toggleLasso.addEventListener('click', () => {
+            if (lassoControl.enabled()) {
+                lassoControl.disable();
+            } else {
+                lassoControl.enable();
             }
-        }
-        map.createPane('pane_SubmarineCables_1');
-        map.getPane('pane_SubmarineCables_1').style.zIndex = 401;
-        map.getPane('pane_SubmarineCables_1').style['mix-blend-mode'] = 'normal';
-        var layer_SubmarineCables_1 = new L.geoJson(json_SubmarineCables_1, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json_SubmarineCables_1',
-            layerName: 'layer_SubmarineCables_1',
-            pane: 'pane_SubmarineCables_1',
-            onEachFeature: pop_SubmarineCables_1,
-            style: style_SubmarineCables_1_0,
         });
-        bounds_group.addLayer(layer_SubmarineCables_1);
-        map.addLayer(layer_SubmarineCables_1);
-        map.createPane('pane_DarkMatterlabelsonly_2');
-        map.getPane('pane_DarkMatterlabelsonly_2').style.zIndex = 402;
-        var layer_DarkMatterlabelsonly_2 = L.tileLayer('https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png', {
-            pane: 'pane_DarkMatterlabelsonly_2',
-            opacity: 1.0,
-            attribution: '<a href="https://cartodb.com/basemaps/">Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.</a>',
-            minZoom: 1,
-            maxZoom: 28,
-            minNativeZoom: 0,
-            maxNativeZoom: 20
+        contain.addEventListener('change', () => {
+            lassoControl.setOptions({ intersect: intersect.checked });
         });
-        layer_DarkMatterlabelsonly_2;
-        map.addLayer(layer_DarkMatterlabelsonly_2);
-        var baseMaps = {};
-        L.control.layers(baseMaps,{"Dark Matter [labels only]": layer_DarkMatterlabelsonly_2,'<img src="legend/SubmarineCables_1.png" /> Submarine Cables': layer_SubmarineCables_1,"Dark Matter": layer_DarkMatter_0,},{collapsed:false}).addTo(map);
-        setBounds();
-        </script>
-    </body>
+        intersect.addEventListener('change', () => {
+            lassoControl.setOptions({ intersect: intersect.checked });
+        });
+    </script>
+
+<a href="https://github.com/zakjan/leaflet-lasso" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+</body>
 </html>
